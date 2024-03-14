@@ -8,8 +8,8 @@ function usage() {
     echo 1>&2
     echo "Examples:" 1>&2
     echo 1>&2
-    echo "$0 satyam@acuvity.ai"
-    echo "$0 satyam@acuvity.ai \$HOME/.ssh/my-other-key-location"
+    echo "$0 praveenhm2@yahoo.com"
+    echo "$0 praveenhm2@yahoo.com \$HOME/.ssh/my-other-key-location"
     echo 1>&2
 }
 
