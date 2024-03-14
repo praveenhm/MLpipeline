@@ -1,3 +1,6 @@
+from math import log
+
+
 def finetune(
     hf_access_token: str,
     wandb_access_token: str,
@@ -61,9 +64,17 @@ def finetune(
 
     df_train = dataset_finetune["train"].to_pandas()
     df_test = dataset_finetune["test"].to_pandas()
-
-    # df_train.rename(columns={"labels": "label"}, inplace=True)
-    # df_test.rename(columns={"labels": "label"}, inplace=True)
+    
+    # Transform the label to a numeric value
+    df_train = pd.DataFrame(
+        {"text": df_train["text"], "label_text": df_train["label"], "label": 1}
+    )
+    df_test = pd.DataFrame(
+        {"text": df_test["text"], "label_text": df_test["label"], "label": 1}
+    )
+    logging.info("..........After transforming........")
+    logging.info(df_train.head())
+    logging.info(df_test.head())
 
     logging.info(
         "Length of training and test sets: \n"

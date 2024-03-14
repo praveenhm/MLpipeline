@@ -254,6 +254,6 @@ if __name__ == "__main__":
         args.output_classify_file,
         args.flush_interval,
         args.cumulative_score,
-        args.text,
+        args.text,   
         args.subject_label,
     )

@@ -139,8 +139,8 @@ def cleaner_finetune(
     )
 
     # Step 3: transform the dataframe
-    banner(["Step 3: Transform the DataFrame"])
-    normalized_df = transform_dataframe(normalized_df)
+    banner(["Step 3: After normalizing the DataFrame"])
+    # normalized_df = transform_dataframe(normalized_df)
     logging.info(normalized_df.head())
 
     # Step 4: Split the data into train and test sets
