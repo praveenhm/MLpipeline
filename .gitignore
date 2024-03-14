@@ -192,4 +192,4 @@ cython_debug/
 .*.tar.gz
 .send.log
 
-data/
+#data/
