@@ -141,6 +141,6 @@ if __name__ == "__main__":
             input="Is it safe to talk sex in the work place? and discuss politics? is there any religious discrimination?"
         )
         out, resp = d.classify(req)
-        print(resp[0])
+        print(resp)
         print(out)
         assert "nsfw" in resp[0]
