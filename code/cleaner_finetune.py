@@ -1,16 +1,14 @@
 import argparse
 import logging
-import time
 import os
+import pandas as pd
 from libdocs.utils.banner.banner import banner
-from libdocs.utils.data_cleaner.normalize_data import normalize_data
 from libdocs.utils.data_cleaner.clean_data_tfidf import clean_large_data
 from libdocs.utils.training.training import (df_to_train_test_bytes,
                                              normalize_data,
                                                 upload_to_hf
                                              )
 
-import pandas as pd
 from libdocs.utils.jsonl.jsonl import JSONL
 
 logging.basicConfig(level=logging.INFO)
@@ -141,7 +139,7 @@ def cleaner_finetune(
 
     # Step 2: Normalize the data in the DataFrame
     banner(["Step 2: Normalize the data in the DataFrame"])
-    normalized_df = normalize_data(df, labels_to_filter, reduce_majority_to)
+    normalized_df = normalize_data(df, labels_to_filter, reduce_majority_to, args.subject)
 
     # Step 3: transform the dataframe
     banner(["Step 3: Transform the DataFrame"])

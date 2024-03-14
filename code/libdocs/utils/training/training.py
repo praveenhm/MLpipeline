@@ -156,20 +156,8 @@ def normalize_data(
     reduce_majority_to: float = 1.0,
     subject_label: str = "label",
 ) -> pd.DataFrame:
-    """
-    This function normalizes the label_text distribution in a dataframe to be
-    approximately close to the minimum label_text,
-    with a maximum of twice the minimum label_text.
-
-    Args:
-    df: A pandas dataframe
-    filter_labels: A list of labels to be filtered out of the dataframe.
-    reduce_majority_to: The fraction of the majority class to reduce to.
-    subject_label: The label_text column in the dataframe.
-
-    Returns:
-    A pandas dataframe normalized to the desired distribution.
-    """
+    """ Normalize the distribution of the data in the DataFrame. """
+        
     logging.info(
         f"subject_label: {subject_label}   filter_labels: {filter_labels}"
     )

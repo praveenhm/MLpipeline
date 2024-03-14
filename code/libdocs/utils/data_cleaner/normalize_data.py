@@ -1,21 +1,16 @@
 import argparse
 import logging
-import time
+import pandas as pd
 from libdocs.utils.banner.banner import banner
-from libdocs.huggingface.huggingface import upload_csv_to_huggingface
-
-from libdocs.utils.training.training import (df_to_train_df,
+from libdocs.utils.training.training import (
                                              df_to_train_test_bytes,
                                              normalize_data,
                                                 upload_to_hf
                                              )
-
-
-import pandas as pd
 from libdocs.utils.jsonl.jsonl import JSONL
+from libdocs.utils.data_cleaner.clean_data_tfidf import clean_large_data
 
 logging.basicConfig(level=logging.INFO)
-
 
 # create args parser
 def create_args_parser():
@@ -121,12 +116,12 @@ def transform_dataframe(input_df):
     })
     return new_df
 
-def normalize_jsonl(
+def pipeline(
     labels_to_filter: list[str], reduce_majority_to: float = 1.0
 ):
 
     args = create_args_parser().parse_args()
-
+  
     # Load the JSONL file into a DataFrame and fix the columns
     df = read_jsonl_files(
         args.input_dir, args.input_filename, args.text, args.subject
@@ -174,4 +169,4 @@ if __name__ == "__main__":
         # "conversation",
     ]  # temporary fix, may not required
     reduce_majority_to = 0.10
-    normalize_jsonl(labels_to_filter, reduce_majority_to)
+    pipeline(labels_to_filter, reduce_majority_to)
