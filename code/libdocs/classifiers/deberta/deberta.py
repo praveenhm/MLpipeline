@@ -7,6 +7,7 @@ from pydantic import BaseModel
 from torch.utils.data import Dataset
 from transformers import pipeline
 
+
 class StringDataset(Dataset):
     def __init__(self, data):
         self.data = data
@@ -17,8 +18,10 @@ class StringDataset(Dataset):
     def __getitem__(self, idx):
         return self.data[idx]
 
+
 class ClassificationRequest(BaseModel):
     input: Union[str, List[str]]
+
 
 default_labels = [
     # Main labels
@@ -33,7 +36,7 @@ default_labels = [
     "cybersecurity",
     "risk_and_compliance",
     "conversation",
-    "nsfw",    
+    "nsfw",
     # detected back to main labels
     "irrelevant",
     "sex",
@@ -47,6 +50,7 @@ mapped_labels = {
     "religious": "nsfw",
     "politics": "nsfw",
 }
+
 
 class DebertaZeroShot(LLMZeroShotBase):
     """
@@ -103,17 +107,17 @@ class DebertaZeroShot(LLMZeroShotBase):
             cumulative_score = 0
             for output in outputs:
                 labels = []
-                merged = {}          
+                merged = {}
                 for index, label in enumerate(output["labels"]):
                     cumulative_score += output["scores"][index]
                     label = (
                         label.strip()
                         .replace(" ", "_")
                         .replace("-", "_")
-                        .replace("resources", "resource")                        
+                        .replace("resources", "resource")
                     )
                     if label in mapped_labels.keys():
-                            label = mapped_labels[label]
+                        label = mapped_labels[label]
                     if label in merged.keys():
                         merged[label] += output["scores"][index]
                     else:
@@ -122,9 +126,14 @@ class DebertaZeroShot(LLMZeroShotBase):
                     labels.append(label)
                     if cumulative_score > self.cumulative_score:
                         break
-                merged = {label: score for label, score in sorted(merged.items(), key=lambda x: x[1], reverse=True)[:3]}
+                merged = {
+                    label: score
+                    for label, score in sorted(
+                        merged.items(), key=lambda x: x[1], reverse=True
+                    )[:3]
+                }
                 responses = list(merged.keys())
-    
+
             return merged, responses
         except Exception as e:
             logging.error(

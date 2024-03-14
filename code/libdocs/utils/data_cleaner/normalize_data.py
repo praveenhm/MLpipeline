@@ -1,16 +1,14 @@
 import argparse
 import logging
+
 import pandas as pd
 from libdocs.utils.banner.banner import banner
-from libdocs.utils.training.training import (
-                                             df_to_train_test_bytes,
-                                             normalize_data,
-                                                upload_to_hf
-                                             )
 from libdocs.utils.jsonl.jsonl import JSONL
-from libdocs.utils.data_cleaner.clean_data_tfidf import clean_large_data
+from libdocs.utils.training.training import (df_to_train_test_bytes,
+                                             normalize_data, upload_to_hf)
 
 logging.basicConfig(level=logging.INFO)
+
 
 # create args parser
 def create_args_parser():
@@ -69,7 +67,6 @@ def create_args_parser():
         help="Input Hugging Face Dataset",
     )
 
-
     return parser
 
 
@@ -83,9 +80,7 @@ def read_jsonl_files(
 
     df = JSONL().from_files(input_dir, input_filename)
     if text and subject:
-        logging.info(
-            f"Using text label: {text} and subject label: {subject}"
-        )
+        logging.info(f"Using text label: {text} and subject label: {subject}")
     else:
         logging.error(
             "Please provide text label and subject label for the input document"
@@ -102,6 +97,7 @@ def read_jsonl_files(
 
     return df
 
+
 def write_jsonl_file(df, output_file_path):
     df.to_json(output_file_path, orient="records", lines=True)
     logging.info(f" JSONL file {output_file_path}")
@@ -109,19 +105,16 @@ def write_jsonl_file(df, output_file_path):
 
 def transform_dataframe(input_df):
     # Create a new DataFrame with the specified columns
-    new_df = pd.DataFrame({
-        'text': input_df['text'],
-        'label_text': input_df['label'],
-        'label': 1  
-    })
+    new_df = pd.DataFrame(
+        {"text": input_df["text"], "label_text": input_df["label"], "label": 1}
+    )
     return new_df
 
-def pipeline(
-    labels_to_filter: list[str], reduce_majority_to: float = 1.0
-):
+
+def pipeline(labels_to_filter: list[str], reduce_majority_to: float = 1.0):
 
     args = create_args_parser().parse_args()
-  
+
     # Load the JSONL file into a DataFrame and fix the columns
     df = read_jsonl_files(
         args.input_dir, args.input_filename, args.text, args.subject
@@ -130,14 +123,14 @@ def pipeline(
     # Normalize the data in the DataFrame
     normalized_df = normalize_data(df, labels_to_filter, reduce_majority_to)
 
-    #transform the dataframe
+    # transform the dataframe
     normalized_df = transform_dataframe(normalized_df)
     logging.info(normalized_df.head())
 
     # Split the data into train and test sets
     banner(["Splitting data into train and test sets"])
-    train_csv_bytes, test_csv_bytes, train_df, test_df = (
-        df_to_train_test_bytes(normalized_df)
+    train_csv_bytes, test_csv_bytes, train_df, test_df = df_to_train_test_bytes(
+        normalized_df
     )
     logging.info(
         f" train dataset size: {len(train_df)} \n"
@@ -155,8 +148,12 @@ def pipeline(
     )
 
     # Write the DataFrame to a new JSONL file
-    write_jsonl_file(train_df, args.output_filename.replace(".jsonl", "_train.jsonl"))
-    write_jsonl_file(test_df, args.output_filename.replace(".jsonl", "_test.jsonl"))
+    write_jsonl_file(
+        train_df, args.output_filename.replace(".jsonl", "_train.jsonl")
+    )
+    write_jsonl_file(
+        test_df, args.output_filename.replace(".jsonl", "_test.jsonl")
+    )
     logging.info(f"DataFrame written to {args.output_filename}")
 
 

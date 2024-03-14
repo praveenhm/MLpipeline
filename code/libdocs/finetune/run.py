@@ -32,6 +32,7 @@ def run(
     results = []  # Store classification results temporarily
 
     logging.info(test_df.head())
+
     def process_batch(batch_data):
         nonlocal correct_top1, correct_top2, correct_top3, processed
 
@@ -51,14 +52,24 @@ def run(
                 "index": _,
                 "text": text,
                 "given": subj,
-                "correct_top1": int(subj == predicted_labels[0]) if predicted_labels else 0,
-                "correct_top2": int(subj in predicted_labels[:2]) if len(predicted_labels) >= 2 else correct_top1,
-                "correct_top3": int(subj in predicted_labels) if predicted_labels else correct_top2,                
+                "correct_top1": (
+                    int(subj == predicted_labels[0]) if predicted_labels else 0
+                ),
+                "correct_top2": (
+                    int(subj in predicted_labels[:2])
+                    if len(predicted_labels) >= 2
+                    else correct_top1
+                ),
+                "correct_top3": (
+                    int(subj in predicted_labels)
+                    if predicted_labels
+                    else correct_top2
+                ),
                 "predicted": predicted_labels,  # Keep as list
                 "score": out,
             }
             results.append(result)
-            
+
             correct_top1 += result["correct_top1"]
             correct_top2 += result["correct_top2"]
             correct_top3 += result["correct_top3"]
@@ -73,8 +84,11 @@ def run(
         # Convert batch results to DataFrame and write to JSONL file
         batch_df = pd.DataFrame(results)
         batch_df.to_json(
-            output_classify_file, orient='records', lines=True, force_ascii=False,
-            mode='a'  # Append to the file for subsequent batches
+            output_classify_file,
+            orient="records",
+            lines=True,
+            force_ascii=False,
+            mode="a",  # Append to the file for subsequent batches
         )
 
         results = []  # Clear results for the next batch
@@ -83,6 +97,12 @@ def run(
         logging.info(f"  accuracy: {correct_top3}/{processed}")
 
     # Log final accuracies
-    logging.info(f"Final Top 1 Accuracy: {correct_top1}/{processed} ({(correct_top1 / processed) * 100}%)")
-    logging.info(f"Final Top 2 Accuracy: {correct_top2}/{processed} ({(correct_top2 / processed) * 100}%)")
-    logging.info(f"Final Top 3 Accuracy: {correct_top3}/{processed} ({(correct_top3 / processed) * 100}%)")
+    logging.info(
+        f"Final Top 1 Accuracy: {correct_top1}/{processed} ({(correct_top1 / processed) * 100}%)"
+    )
+    logging.info(
+        f"Final Top 2 Accuracy: {correct_top2}/{processed} ({(correct_top2 / processed) * 100}%)"
+    )
+    logging.info(
+        f"Final Top 3 Accuracy: {correct_top3}/{processed} ({(correct_top3 / processed) * 100}%)"
+    )

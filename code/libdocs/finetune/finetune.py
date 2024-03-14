@@ -18,6 +18,7 @@ def finetune(
     import numpy as np
     import pandas as pd
     import torch
+    import wandb
     from accelerate.utils import release_memory
     from datasets import load_dataset
     from libdocs.wandb.wandb_report import WandbMetricsReport
@@ -25,8 +26,6 @@ def finetune(
                                  precision_recall_fscore_support)
     from transformers import (AutoConfig, AutoModelForSequenceClassification,
                               AutoTokenizer, Trainer, TrainingArguments)
-
-    import wandb
 
     logging.basicConfig(
         level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
@@ -332,7 +331,9 @@ def finetune(
             # can increase speed with dynamic padding, by grouping similar length texts
             # https://huggingface.co/transformers/main_classes/trainer.html
             group_by_length=False,
-            learning_rate=9e-6 if "large" in model_for_training_finetune else 2e-5,
+            learning_rate=(
+                9e-6 if "large" in model_for_training_finetune else 2e-5
+            ),
             per_device_train_batch_size=per_device_train_batch_size,
             per_device_eval_batch_size=eval_batch,
             # (!adapt/halve batch size accordingly). accumulates gradients over X steps,
@@ -410,7 +411,7 @@ def finetune(
         # the older checkpoints in output_dir
         # save_total_limit=1,
         # logging_strategy="epoch",
-        load_best_model_at_end=True,        
+        load_best_model_at_end=True,
         report_to="all",  # "all"
         run_name=run_name,
         push_to_hub=True,  # does not seem to work if save_strategy="no"

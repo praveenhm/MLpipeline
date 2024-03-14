@@ -1,17 +1,16 @@
 import argparse
 import logging
 import os
+
 import pandas as pd
 from libdocs.utils.banner.banner import banner
 from libdocs.utils.data_cleaner.clean_data_tfidf import clean_large_data
-from libdocs.utils.training.training import (df_to_train_test_bytes,
-                                             normalize_data,
-                                                upload_to_hf
-                                             )
-
 from libdocs.utils.jsonl.jsonl import JSONL
+from libdocs.utils.training.training import (df_to_train_test_bytes,
+                                             normalize_data, upload_to_hf)
 
 logging.basicConfig(level=logging.INFO)
+
 
 # create args parser
 def create_args_parser():
@@ -83,9 +82,7 @@ def read_jsonl_files(
 
     df = JSONL().from_files(input_dir, input_filename)
     if text and subject:
-        logging.info(
-            f"Using text label: {text} and subject label: {subject}"
-        )
+        logging.info(f"Using text label: {text} and subject label: {subject}")
     else:
         logging.error(
             "Please provide text label and subject label for the input document"
@@ -110,12 +107,11 @@ def write_jsonl_file(df, output_file_path):
 
 def transform_dataframe(input_df):
     # Create a new DataFrame with the specified columns for fine-tuning
-    new_df = pd.DataFrame({
-        'text': input_df['text'],
-        'label_text': input_df['label'],
-        'label': 1  
-    })
+    new_df = pd.DataFrame(
+        {"text": input_df["text"], "label_text": input_df["label"], "label": 1}
+    )
     return new_df
+
 
 def cleaner_finetune(
     labels_to_filter: list[str], reduce_majority_to: float = 1.0
@@ -123,9 +119,12 @@ def cleaner_finetune(
 
     args = create_args_parser().parse_args()
 
-
     # Step 1: Cosine similarity
-    banner(["Step 1: Do cosine similarity based data cleaning and finetune the model"])
+    banner(
+        [
+            "Step 1: Do cosine similarity based data cleaning and finetune the model"
+        ]
+    )
     # input_file = args.input_dir + "/" + args.input_filename
     input_file = os.path.join(args.input_dir, args.input_filename)
     output_file = args.output_filename
@@ -139,7 +138,9 @@ def cleaner_finetune(
 
     # Step 2: Normalize the data in the DataFrame
     banner(["Step 2: Normalize the data in the DataFrame"])
-    normalized_df = normalize_data(df, labels_to_filter, reduce_majority_to, args.subject)
+    normalized_df = normalize_data(
+        df, labels_to_filter, reduce_majority_to, args.subject
+    )
 
     # Step 3: transform the dataframe
     banner(["Step 3: Transform the DataFrame"])
@@ -148,10 +149,10 @@ def cleaner_finetune(
 
     # Step 4: Split the data into train and test sets
     banner(["Step 4: Splitting data into train and test sets"])
-    train_csv_bytes, test_csv_bytes, train_df, test_df = (
-        df_to_train_test_bytes(normalized_df)
+    train_csv_bytes, test_csv_bytes, train_df, test_df = df_to_train_test_bytes(
+        normalized_df
     )
-    
+
     # Step 5: Upload CSVs bytes to Hugging Face Datasets
     banner(["Step 5: Upload to Hugging Face"])
     upload_to_hf(
@@ -165,8 +166,12 @@ def cleaner_finetune(
 
     # Step 6: Write the DataFrame to a new JSONL file
     banner(["Step 6: Write the DataFrame to a new JSONL file"])
-    write_jsonl_file(train_df, args.output_filename.replace(".jsonl", "_train.jsonl"))
-    write_jsonl_file(test_df, args.output_filename.replace(".jsonl", "_test.jsonl"))
+    write_jsonl_file(
+        train_df, args.output_filename.replace(".jsonl", "_train.jsonl")
+    )
+    write_jsonl_file(
+        test_df, args.output_filename.replace(".jsonl", "_test.jsonl")
+    )
     logging.info(f"DataFrame written to {args.output_filename}")
 
 

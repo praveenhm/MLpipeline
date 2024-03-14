@@ -10,4 +10,3 @@ j.profile(
     "text",
     "label",
 )
-

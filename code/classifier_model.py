@@ -7,13 +7,13 @@ from libdocs.finetune.finetune import finetune
 from libdocs.finetune.run import run
 from libdocs.utils.banner.banner import banner
 from libdocs.utils.jsonl.jsonl import JSONL
-from libdocs.utils.training.training import (df_to_train_df,
-                                            )
+from libdocs.utils.training.training import df_to_train_df
 
 # Setup basic logging
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
+
 
 def finetune_model(
     hf_access_token: str = None,
@@ -194,7 +194,6 @@ if __name__ == "__main__":
         help="wandb output directory, where the hmtl files are saved",
     )
 
-
     args = parser.parse_args()
     # args = parser.parse_args(["--examples"])
 
@@ -225,14 +224,16 @@ if __name__ == "__main__":
         test_df = df_to_train_df(df, args.text, args.subject_label)
         logging.info(test_df.head())
 
-    else:        
+    else:
         if args.train:
             # step downloading the dataset
             from datasets import load_dataset
 
-            dataset_finetune = load_dataset(args.input_hf_dataset, token=args.hf_access_token)
+            dataset_finetune = load_dataset(
+                args.input_hf_dataset, token=args.hf_access_token
+            )
             logging.info(dataset_finetune)
-            test_df = dataset_finetune['test'].to_pandas()          
+            test_df = dataset_finetune["test"].to_pandas()
             logging.info(test_df.head())
 
             # Step 4: Finetune the model

@@ -3,11 +3,10 @@ import logging
 from typing import List, Tuple
 
 import pandas as pd
+from libdocs.huggingface.huggingface import upload_csv_to_huggingface
 from libdocs.types.types import LabeledChunk
 from libdocs.utils.jsonl.jsonl import JSONL
 from sklearn.model_selection import train_test_split
-from libdocs.huggingface.huggingface import upload_csv_to_huggingface
-
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
@@ -156,8 +155,8 @@ def normalize_data(
     reduce_majority_to: float = 1.0,
     subject_label: str = "label",
 ) -> pd.DataFrame:
-    """ Normalize the distribution of the data in the DataFrame. """
-        
+    """Normalize the distribution of the data in the DataFrame."""
+
     logging.info(
         f"subject_label: {subject_label}   filter_labels: {filter_labels}"
     )
@@ -170,7 +169,9 @@ def normalize_data(
     df_filtered = df_filtered.sample(frac=1)
 
     # Get the minimum and maximum label counts (after filtering)
-    min_count = int(df_filtered[subject_label].value_counts().min() * reduce_majority_to)
+    min_count = int(
+        df_filtered[subject_label].value_counts().min() * reduce_majority_to
+    )
     max_count = min_count * 2
 
     # Group data by label text

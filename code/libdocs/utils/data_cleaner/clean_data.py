@@ -49,4 +49,3 @@ if __name__ == "__main__":
 
     # Process the file
     process_jsonl_file(input_file, output_file)
-    
