@@ -1,0 +1,12 @@
+{
+    "editor.tabSize": 4,
+    "ruff.showNotifications": "onWarning",
+    "python.analysis.extraPaths": [
+        "./code"
+    ],
+    "python.testing.pytestArgs": [
+        "."
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true
+}

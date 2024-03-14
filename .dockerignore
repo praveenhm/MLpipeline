@@ -1,0 +1,6 @@
+data/**/*
+data
+*.log
+credentials.json
+service-account.json
+**/.git
