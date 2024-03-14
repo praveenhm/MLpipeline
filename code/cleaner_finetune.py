@@ -122,7 +122,6 @@ def cleaner_finetune(
             "Step 1: Do cosine similarity based data cleaning and finetune the model"
         ]
     )
-    # input_file = args.input_dir + "/" + args.input_filename
     input_file = os.path.join(args.input_dir, args.input_filename)
     output_file = args.output_filename
     subject = args.text
