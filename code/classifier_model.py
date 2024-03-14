@@ -236,15 +236,15 @@ if __name__ == "__main__":
 
             # Step 4: Finetune the model
             banner(["Finetuning started"])
-            finetune_model(
-                hf_access_token=args.hf_access_token,
-                wandb_access_token=args.wandb_access_token,
-                model_for_training_finetune=args.model_for_training_finetune,
-                input_hf_dataset=args.input_hf_dataset,
-                hf_model_name=args.hf_model_name,
-                downsample=args.downsample,
-                wandb_output=args.wandb_output,
-            )
+            # finetune_model(
+            #     hf_access_token=args.hf_access_token,
+            #     wandb_access_token=args.wandb_access_token,
+            #     model_for_training_finetune=args.model_for_training_finetune,
+            #     input_hf_dataset=args.input_hf_dataset,
+            #     hf_model_name=args.hf_model_name,
+            #     downsample=args.downsample,
+            #     wandb_output=args.wandb_output,
+            # )
 
     # Step 5: Run the classification process on the finetuned model
     test(

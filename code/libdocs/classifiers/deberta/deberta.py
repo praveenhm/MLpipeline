@@ -38,10 +38,10 @@ default_labels = [
     "conversation",
     "nsfw",
     # detected back to main labels
-    "irrelevant",
-    "sex",
-    "religious",
-    "politics",
+    # "irrelevant",
+    # "sex",
+    # "religious",
+    # "politics",
 ]
 
 mapped_labels = {
@@ -116,8 +116,8 @@ class DebertaZeroShot(LLMZeroShotBase):
                         .replace("-", "_")
                         .replace("resources", "resource")
                     )
-                    if label in mapped_labels.keys():
-                        label = mapped_labels[label]
+                    # if label in mapped_labels.keys():
+                    #     label = mapped_labels[label]
                     if label in merged.keys():
                         merged[label] += output["scores"][index]
                     else:

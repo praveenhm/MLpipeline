@@ -92,9 +92,9 @@ def run(
         )
 
         results = []  # Clear results for the next batch
-        logging.info(f"  accuracy: {correct_top1}/{processed}")
-        logging.info(f"  accuracy: {correct_top2}/{processed}")
-        logging.info(f"  accuracy: {correct_top3}/{processed}")
+        logging.info(f"  accuracy top1: {correct_top1}/{processed}")
+        logging.info(f"  accuracy top2: {correct_top2}/{processed}")
+        logging.info(f"  accuracy top3: {correct_top3}/{processed}")
 
     # Log final accuracies
     logging.info(
