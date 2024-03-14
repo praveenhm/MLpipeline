@@ -7,13 +7,11 @@ from libdocs.finetune.finetune import finetune
 from libdocs.finetune.run import run
 from libdocs.utils.banner.banner import banner
 from libdocs.utils.jsonl.jsonl import JSONL
-from libdocs.utils.training.training import df_to_train_df
 
 # Setup basic logging
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
-
 
 def finetune_model(
     hf_access_token: str = None,
@@ -219,10 +217,10 @@ if __name__ == "__main__":
         # from testdata.test_examples import examples_list
 
         banner(["Test agianst given model"])
-        df = JSONL().from_files(args.input_dir, args.filename)
-        logging.info(df.head())
-        test_df = df_to_train_df(df, args.text, args.subject_label)
+        test_df = JSONL().from_files(args.input_dir, args.filename)
         logging.info(test_df.head())
+        # test_df = df_to_train_df(df, args.text, args.subject_label)
+        # logging.info(test_df.head())
 
     else:
         if args.train:
