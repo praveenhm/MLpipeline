@@ -53,15 +53,7 @@ mapped_labels = {
 
 
 class DebertaZeroShot(LLMZeroShotBase):
-    """
-    A class for zero-shot text classification using a DeBERTa model.
-
-    Attributes:
-        model_name (str): Name of the model to be used.
-        cumulative_score (float): Threshold for cumulative score to decide classification cut-off.
-        max_model_len (int): Maximum model length.
-        token (str, optional): Token for authenticated model access.
-    """
+    """ Zero-shot text classification using DeBERTa model."""
 
     def __init__(
         self,
@@ -85,23 +77,25 @@ class DebertaZeroShot(LLMZeroShotBase):
     def classify(
         self, req: ClassificationRequest
     ) -> Tuple[Dict[str, float], List[List[str]]]:
-        """
-        Classifies input text using the globally defined default_labels.
-
-        Parameters:
-            req (ClassificationRequest): The classification request containing the input text.
-
-        Returns:
-            List[List[str]]: The classification labels for each input.
-        """
+        """ Classify input text using the DeBERTa model.  """
         try:
             if isinstance(req.input, str):
                 req.input = [req.input]
 
+            # Truncate the input text if it exceeds 512 tokens
+            max_length = 512
+            truncated_inputs = []
+            for text in req.input:
+                if len(text.split()) > max_length:
+                    truncated_text = " ".join(text.split()[:max_length])
+                    truncated_inputs.append(truncated_text)
+                else:
+                    truncated_inputs.append(text)
+
             outputs = []
-            dataset = StringDataset(req.input)
+            dataset = StringDataset(truncated_inputs)# req.input
             with torch.inference_mode():
-                outputs = self.pipe(dataset, default_labels, multi_label=False)
+                outputs = self.pipe(dataset, default_labels, multi_label=False, )
 
             responses = []
             cumulative_score = 0
