@@ -1,111 +1,58 @@
-# Background
+# PDF Processing Pipeline with RAG and Fine-tuning
 
-Drop PDFs here and ensure you have a meta data file.
+## Overview 📜
 
+This repository implements a multi-stage machine learning pipeline designed primarily for processing PDF documents. The core functionality revolves around extracting text, chunking it intelligently, generating embeddings, indexing them for efficient retrieval, and utilizing various language models (including fine-tuned ones) for tasks like classification or analysis. It leverages cloud infrastructure (GCP, including GCS, DocumentAI, and BigQuery) extensively.
 
-# Pipeline
+## Pipeline Stages & Data Flow ⚙️
 
-## Stage 0 - Retrieve Input
+The pipeline executes in sequential stages:
 
-Can be executed with defaults by running `./stage0`.
-Its source begins in `code/downloader.py`.
+1.  **Stage 0 (Input Retrieval):** Downloads PDFs and associated metadata (`.metadata.json`) from Google Drive, performing basic file sanity checks. Source: `code/downloader.py`.
+2.  **Stage 1 (Initial Ingestion & Text Extraction):**
+    *   Splits PDFs into a format suitable for Google DocumentAI (`code/splitter`).
+    *   Uploads split files to GCS.
+    *   Utilizes Google DocumentAI for OCR and text extraction, producing `.documentai.jsonl` files containing structured text chunks.
+    *   Uploads DocumentAI output back to GCS. Source: `code/ingestion.py`.
+3.  **Stage 2 (Chunking):**
+    *   Processes the DocumentAI output through a custom chunking mechanism (`code/chunker`, implemented in `code/libdocs/chunker/`), creating potentially more semantically meaningful or task-specific chunks (`.batchchunker.jsonl`).
+    *   Uploads these refined chunks to GCS. Source: `code/chunker.py`.
+4.  **Stage 3 (Storage, Analysis & Verdicts):**
+    *   Stores the processed chunk data in Google BigQuery for structured access and analysis.
+    *   This stage integrates the core RAG and fine-tuning capabilities.
 
-**Input:** Google Drive folder
+## Retrieval-Augmented Generation (RAG) 🔍➡️🧠
 
-**Output:** PDFs and `.metadata.json` files
+The pipeline implements the core components necessary for RAG, enabling models to answer queries based on the ingested document content:
 
-- [x] Downloads PDFs from Google Drive
-  - downloads them from the `subject_taxonomy` Google Drive
-  - only downloads if the file does not already exist and its MD5 sum matches
-- [x] Runs file sanity on them
-    - renames the files if necessary
-    - ensures that a `.pdf` and `.metadata.json` file exist per PDF
-    - instantiates `Metadata` to make sure they work
+1.  **Retrieval Components:**
+    *   **Chunking:** Stages 1 and 2 prepare text chunks. The custom chunker (`code/libdocs/chunker/`) is vital for creating retrieval-optimized segments.
+    *   **Embedding:** Chunks are converted into vector embeddings using models from `code/libdocs/embedder/` (potentially leveraging `code/libdocs/huggingface/` or cloud APIs). These vectors capture semantic meaning.
+    *   **Indexing:** A FAISS index (`code/libdocs/faissindexer/`) is built from embeddings, allowing highly efficient vector similarity searches across the document corpus.
+    *   **Search:** Vector search capabilities are used to find the most relevant chunks (top-k) based on an input query, measuring retrieval accuracy (e.g., top-1, top-3).
+2.  **Augmentation & Generation:**
+    *   The retrieved chunks (context) augment the original query.
+    *   This combined input is fed into various language models (`code/libdocs/classifiers/`, including `acuopenai`, `anthropic`, `mistral`, `zephyr`, `deberta`) for generating context-aware outputs or "verdicts".
+    *   The `llmchecker` module (`code/libdocs/llmchecker/`) may be used for evaluating or validating generated outputs.
 
-## Stage 1 - Initial Data Ingestion
+## Fine-tuning ✨
 
-Can be executed with defaults by running `./stage1`.
-Its source beings in `code/ingestion.py`.
+The repository supports fine-tuning models, adapting them for improved performance on domain-specific tasks, with a specific focus on DeBERTa:
 
-**Input:** PDFs and `.metadata.json` files
-**Output:** `.documentai.jsonl` files, , and `documentai.combined.{jsonl,parquet,html}`
+1.  **Dedicated Module:** `code/libdocs/finetune/` contains the core logic for managing and executing the fine-tuning process.
+2.  **Model Focus:** Primarily targets the DeBERTa model architecture (`code/libdocs/classifiers/deberta/`).
+3.  **Process:** Involves taking a pre-trained DeBERTa model and performing additional training using curated datasets (potentially derived from the processed PDFs or stored in `data/`). This tailors the model to the specific nuances of the project's data.
+4.  **Evaluation:** Includes steps for rigorously testing the fine-tuned model and quantifying performance gains (e.g., accuracy metrics).
+5.  **Utilities & Tracking:**
+    *   Helper scripts in `code/utils/training/` likely support the workflow (data prep, training loops).
+    *   Integration with `wandb` (`code/libdocs/wandb/`) enables robust experiment tracking and visualization during the fine-tuning process.
 
-- [x] Splitter.
-  --pdf data/pdfs/biz_dev/one.pdf --pdf data/pdfs/cybersecurity/*
-  --split-dir data/processing/pdfs/split/
-  Splits files in input-directory data/pdfs and makes it consumable for documentAI in directory data/pdfs/split.
+## Supporting Components 🛠️
 
-- [x] Upload split files to GCS.
-  --split-dir data/pdfs/split/
-  --gcs-bucket docprocessor
-  --gcs-base-dir data/processing/
+*   **Metadata Handling:** `code/libdocs/metadata/` manages the `.metadata.json` files.
+*   **Utilities:** `code/utils/` offers helpers for data cleaning (`data_cleaner`), GPU management (`gpu`), file handling (`jsonl`, `csv`), text processing (`text`), etc.
+*   **API:** `code/libdocs/rest_api/` suggests a potential REST API endpoint for interaction.
 
-- [x] Convert to text using DocumentAI
-  Cleanup as much as possible
-  --chunks-dir data/processing/pdfs/chunks/
-  --gcp-project-id development-398309
-  --gcp-dai-location us
-  --gcp-dai-processor-id 277f11647ef22bec
+## Summary 🎯
 
-- [x] Upload chunks from DocumentAI to GCS
-  --chunks-dir data/processing/pdfs/chunks/
-  --gcs-bucket docprocessor
-  --gcs-base-dir data/processing/
-
-## Stage 2 - Chunker
-
-Can be executed with defaults by running `./stage2`.
-Its source beings in `code/chunker.py` (`code/libdocs/chunker/`).
-
-**Input:** `.documentai.jsonl` files (Text chunks from DocumentAI)
-**Output:** `.batchchunker.jsonl` files (Refined, potentially semantic chunks), and combined `batchchunker.combined.{jsonl,parquet,html}`
-
-- [x] 📄➡️🧩 Process chunks from DocumentAI through our custom chunker (`code/libdocs/chunker/`) for potentially improved semantic coherence or task-specific segmentation.
-  --chunks-dir data/processing/pdfs/chunks/
-
-- [x] ☁️ Upload enhanced chunks from the custom Chunker to GCS.
-  --chunks-dir data/processing/pdfs/chunks/
-  --gcs-bucket docprocessor
-  --gcs-base-dir data/processing/
-
-## Stage 3 - Embedding, Indexing, RAG & Fine-tuning 🧠🔍⚙️
-
-This stage focuses on leveraging the processed text chunks for advanced analysis using Retrieval-Augmented Generation (RAG) and fine-tuned models.
-
-**Input:** `.batchchunker.jsonl` files (Refined chunks)
-**Output:** Model verdicts, evaluation metrics, indexed data.
-
-- [x] 💾 **Store & Prepare:** Persist refined chunks from GCS into BigQuery for structured access.
-  --gcs-bucket docprocessor
-  --gcs-base-dir data/processing/
-  --gcp-bq-dataset training
-  --gcp-bq-table pdfs
-
-- [ ] 🔢 **Embed:** Generate vector embeddings for each chunk using models specified in `code/libdocs/embedder/` (potentially leveraging `code/libdocs/huggingface/` or cloud provider APIs). These embeddings capture the semantic meaning of the text.
-
-- [ ] 🗂️ **Index:** Build a high-performance vector index (e.g., using FAISS via `code/libdocs/faissindexer/`) from the generated embeddings. This enables ultra-fast similarity searches across the entire document corpus.
-
-- [ ] 🔍 **Retrieval (RAG - Part 1):** Given a query, perform a vector search against the index to retrieve the most relevant document chunks (top-k). This forms the "augmented context".
-    - Evaluate retrieval performance (e.g., top-1, top-3 accuracy).
-
-- [ ] 🤖 **Generation & Analysis (RAG - Part 2 & Model Verdicts):** Feed the retrieved context along with the original query into various LLMs (`code/libdocs/classifiers/`) to generate informed "verdicts" or answers. Supported models include:
-    - OpenAI (`acuopenai`)
-    - Anthropic (`anthropic`)
-    - Cohere (Implied, check `classifiers`)
-    - Mistral (`mistral`)
-    - Zephyr (`zephyr`)
-    - Fine-tuned models (see below)
-    - Use `code/libdocs/llmchecker/` for potential output validation.
-  --gcp-bq-dataset training
-  --gcp-bq-table pdfs
-
-- [ ] ✨ **Fine-tuning (Focus: DeBERTa):** Improve model performance on domain-specific tasks by fine-tuning pre-trained models.
-    - **Module:** Utilizes `code/libdocs/finetune/` and potentially helpers in `code/utils/training/`.
-    - **Target Model:** Primarily focused on DeBERTa (`code/libdocs/classifiers/deberta/`).
-    - **Process:** Further train the model on curated datasets (potentially derived from the ingested PDFs or stored in `data/`).
-    - **Tracking:** Leverage `wandb` (`code/libdocs/wandb/`) for experiment tracking and visualization.
-    - **Evaluation:** Test the fine-tuned model rigorously and measure accuracy improvements.
-
-- [ ] 📊 **Visualization (Optional):** Analyze embedding space using techniques like UMAP (potentially via `code/libdocs/google/` or other plotting libs) for insights into data clusters and relationships.
-
-**Overall Goal:** To create a robust system capable of understanding and reasoning over large PDF document sets by combining efficient retrieval with the power of large language models, including specialized, fine-tuned versions.
+This repository defines a robust pipeline for ingesting PDFs, transforming them into indexed vector embeddings for effective Retrieval-Augmented Generation (RAG), and leveraging diverse LLMs—including specialized, fine-tuned models like DeBERTa—to perform sophisticated analysis and generate insights grounded in the document content.
