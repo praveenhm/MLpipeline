@@ -123,12 +123,12 @@ Ships a specific file or directory
 ```
 
 
-## COMING SOON (Satyam)
+## COMING SOON
 
 1. At top level you will soon have stage3 which will do cleaner
 2. At top level you will soon have stage41 which will run classifier_knn.py
 3. At top level you will soon have stage42 which will run classifier_model.py
 
-## COMING SOON (Marcus)
+## COMING SOON 
 
 All the stage* scripts will take a `--run-pod` which will run the stage on a machine you may have created with the name `tanh.${USER}` instead of locally.
