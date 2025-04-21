@@ -25,7 +25,7 @@ graph TD
         Q[❓ User Query] --> R(Query Embedding);
         R --> S(Vector Search);
         P --> S;
-        S --> T{🧩 Retrieved Chunks (Context)};
+        S --> T{"🧩 Retrieved Chunks (Context)"};
         Q --> U(Augmentation);
         T --> U;
         U --> V(LLM Generation);
