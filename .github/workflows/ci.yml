@@ -1,4 +1,4 @@
-name: Acuvity Data Science Continuous Integration
+name: tanh Data Science Continuous Integration
 
 on:
   push:

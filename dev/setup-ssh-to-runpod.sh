@@ -1,7 +1,7 @@
 #!/bin/bash
 
 function usage() {
-    echo "USAGE: $0 user@acuvity.ai [ /path/to/ssh/key ]" 1>&2
+    echo "USAGE: $0 user@tanh.ai [ /path/to/ssh/key ]" 1>&2
     echo 1>&2
     echo "By default this will generate a new SSH key at: $HOME/.ssh/runpod-key" 1>&2
     echo 1>&2

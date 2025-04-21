@@ -1,4 +1,4 @@
-FROM acuvity/mldev:latest
+FROM tanh/mldev:latest
 
 COPY code code
 COPY stage* ./

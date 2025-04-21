@@ -55,7 +55,7 @@ COPYFILE_DISABLE=1 tar --exclude='._*' -czvf gen/.runpod.tar.gz ${ONLY} ${INCLUD
 
 # we put the process into the background
 echo "sending gen/.runpod.tar.gz ..."
-(runpodctl send gen/.runpod.tar.gz --code "${USER}-runpod-acuvity-docspipeline" > gen/.send.log 2>&1) &
+(runpodctl send gen/.runpod.tar.gz --code "${USER}-runpod-tanh-docspipeline" > gen/.send.log 2>&1) &
 
 # and store the PID of the background process
 pid=$!

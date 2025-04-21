@@ -1,6 +1,6 @@
-# Acuvity docspipeline Development Environment
+# tanh docspipeline Development Environment
 
-Acuvity has been using runpod but its been manual and cumbersome.
+tanh has been using runpod but its been manual and cumbersome.
 When we need to run on multiple GPUs, manually creating multiple containers on vscode is not a scalable model.
 
 We have the following objectives:
@@ -43,10 +43,10 @@ Run the following to create a pod which is dedicated for your user.
 ./runpod create
 ```
 
-If you want to change its default name (which is `acuvity.USER`), you can pass a `--name` argument.
+If you want to change its default name (which is `tanh.USER`), you can pass a `--name` argument.
 You can select a different GPU by passing the `--gpu-type` flag and passing the GPU that you want to use.
 You can retrieve a list of valid GPUs and their prices by running the `list-prices` command.
-By default it is going to create a pod with the image name set to `acuvity/docspipeline:GIT_BRANCH`.
+By default it is going to create a pod with the image name set to `tanh/docspipeline:GIT_BRANCH`.
 This means that as long as you have a PR open for your branch, you will get an up-to-date pod with your work.
 You can override this with the `--image-name` flag if so desired.
 
@@ -131,4 +131,4 @@ Ships a specific file or directory
 
 ## COMING SOON (Marcus)
 
-All the stage* scripts will take a `--run-pod` which will run the stage on a machine you may have created with the name `acuvity.${USER}` instead of locally.
+All the stage* scripts will take a `--run-pod` which will run the stage on a machine you may have created with the name `tanh.${USER}` instead of locally.

@@ -1,9 +1,9 @@
 import json
 
 # File paths
-file1_path = "/Users/praveenm/dev/acuvity/data/20240228/inference/clean_combined_test.jsonl"
-file2_path = "/Users/praveenm/dev/acuvity/data/20240228/train/normalize/clean_balanced_combined_train.jsonl"
-output_file2_path = "/Users/praveenm/dev/acuvity/data/20240228/train/normalize/unique_entries.jsonl"
+file1_path = "/Users/praveenm/dev/tanh/data/20240228/inference/clean_combined_test.jsonl"
+file2_path = "/Users/praveenm/dev/tanh/data/20240228/train/normalize/clean_balanced_combined_train.jsonl"
+output_file2_path = "/Users/praveenm/dev/tanh/data/20240228/train/normalize/unique_entries.jsonl"
 
 def read_texts_from_jsonl(file_path):
     texts = set()

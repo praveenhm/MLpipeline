@@ -14,7 +14,7 @@ def _pod_name(name: str) -> str:
     if name is not None and name != "":
         return name
     else:
-        return f'acuvity.{os.getenv("USER", "user")}'
+        return f'tanh.{os.getenv("USER", "user")}'
 
 
 def _get_pod_id(name: str) -> str:
@@ -55,7 +55,7 @@ def create(args):
         branch = subprocess.check_output(
             ["git", "branch", "--no-color", "--show-current"], encoding="utf-8"
         ).strip()
-        image_name = f"ghcr.io/acuvity/docspipeline:{branch}"
+        image_name = f"ghcr.io/tanh/docspipeline:{branch}"
     pod.create(name, args.gpuCount, args.gpuType, image_name)
 
 

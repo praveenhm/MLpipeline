@@ -92,7 +92,7 @@ mutation {{
 def query_create_pod(
     name: str,
     template_id: str = "bdi1ajq2pj",
-    image_name: str = "ghcr.io/acuvity/docspipeline:main",
+    image_name: str = "ghcr.io/tanh/docspipeline:main",
     gpu_count: int = 1,
     gpu_type_id: str = "NVIDIA GeForce RTX 4090",
 ) -> str:
@@ -161,7 +161,7 @@ def create(
     name: str,
     gpu_count: int = 1,
     gpu_type: str = "NVIDIA GeForce RTX 4090",
-    image_name: str = "ghcr.io/acuvity/docspipeline:main",
+    image_name: str = "ghcr.io/tanh/docspipeline:main",
 ) -> Dict[str, Any]:
     raw_return = run_graphql_query(
         query_create_pod(

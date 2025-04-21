@@ -1,4 +1,4 @@
-name: Acuvity Data Science Docker Builds
+name: tanh Data Science Docker Builds
 
 on:
   push:
@@ -46,7 +46,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           push: true
-          tags: ghcr.io/acuvity/docspipeline:${{ github.head_ref || github.ref_name }}
+          tags: ghcr.io/tanh/docspipeline:${{ github.head_ref || github.ref_name }}
       - name: Setup tmate session for debug
         if: ${{ failure() && github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
         uses: mxschmitt/action-tmate@v3

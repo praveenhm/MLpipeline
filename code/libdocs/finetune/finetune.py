@@ -260,7 +260,7 @@ def finetune(
 
     # Set the directory to write the fine-tuned model and training logs to.
     training_directory = (
-        f'./results/{hf_model_name.split("/")[-1]}-acuvity-{now}'
+        f'./results/{hf_model_name.split("/")[-1]}-tanh-{now}'
     )
     # training_directory = f'./results/{model_name.split("/")[-1]}-zeroshot-{args.dataset_name_heldout}-{now}'
 

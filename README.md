@@ -3,12 +3,6 @@
 
 Drop PDFs here and ensure you have a meta data file.
 
-Filenames must be lowercase and underscores. Convert spaces, +, - to _.
-Create a metadata.json which for a file like a.pdf is a.metadata.json.
-
-https://drive.google.com/drive/folders/159Ajqu1WPZtUQH9ikMQZFCQXgx9_lsEh
-
-
 
 # Pipeline
 
