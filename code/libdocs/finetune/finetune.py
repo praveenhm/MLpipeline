@@ -10,7 +10,6 @@ def finetune(
     downsample: bool = False,
     wandb_output: str = "./output",
 ):
-
     import gc
     import logging
     import warnings
@@ -25,10 +24,18 @@ def finetune(
     from accelerate.utils import release_memory
     from datasets import load_dataset
     from libdocs.wandb.wandb_report import WandbMetricsReport
-    from sklearn.metrics import (accuracy_score, balanced_accuracy_score,
-                                 precision_recall_fscore_support)
-    from transformers import (AutoConfig, AutoModelForSequenceClassification,
-                              AutoTokenizer, Trainer, TrainingArguments)
+    from sklearn.metrics import (
+        accuracy_score,
+        balanced_accuracy_score,
+        precision_recall_fscore_support,
+    )
+    from transformers import (
+        AutoConfig,
+        AutoModelForSequenceClassification,
+        AutoTokenizer,
+        Trainer,
+        TrainingArguments,
+    )
 
     logging.basicConfig(
         level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
@@ -45,9 +52,7 @@ def finetune(
     )
 
     # Convert current date to Pacific Time Zone
-    pacific_time = datetime.now(timezone.utc).astimezone(
-        timezone(timedelta(hours=-8))
-    )
+    pacific_time = datetime.now(timezone.utc).astimezone(timezone(timedelta(hours=-8)))
     formatted_date = pacific_time.strftime("%Y%m%d")
 
     # set random seed for reproducibility
@@ -64,13 +69,40 @@ def finetune(
 
     df_train = dataset_finetune["train"].to_pandas()
     df_test = dataset_finetune["test"].to_pandas()
-    
-    # Transform the label to a numeric value
+
+    # Create label maps *before* redefining DataFrames
+    # Use training set labels to define the map
+    unique_labels_train = np.sort(df_train.label.unique()).tolist()
+    label2id = dict(
+        zip(
+            unique_labels_train,
+            np.sort(pd.factorize(unique_labels_train, sort=True)[0]).tolist(),
+        )
+    )
+    id2label = dict(
+        zip(
+            np.sort(pd.factorize(unique_labels_train, sort=True)[0]).tolist(),
+            unique_labels_train,
+        )
+    )
+    logging.info(
+        f"Derived label maps from training data: \n label2id: {label2id} \n id2label: {id2label}"
+    )
+
+    # Transform the label to a numeric value using the map
     df_train = pd.DataFrame(
-        {"text": df_train["text"], "label_text": df_train["label"], "label": 1}
+        {
+            "text": df_train["text"],
+            "label_text": df_train["label"],
+            "label": df_train["label"].map(label2id),
+        }
     )
     df_test = pd.DataFrame(
-        {"text": df_test["text"], "label_text": df_test["label"], "label": 1}
+        {
+            "text": df_test["text"],
+            "label_text": df_test["label"],
+            "label": df_test["label"].map(label2id),
+        }
     )
     logging.info("..........After transforming........")
     logging.info(df_train.head())
@@ -130,35 +162,39 @@ def finetune(
     tokenizer = AutoTokenizer.from_pretrained(
         model_for_training_finetune, use_fast=True, model_max_length=512
     )
-    logging.info(
-        f"Base model_name for training :  {model_for_training_finetune} \n"
-    )
+    logging.info(f"Base model_name for training :  {model_for_training_finetune} \n")
 
+    # The label maps are already created above
     # link the numeric labels to the label texts
-    label_text = np.sort(df_test.label_text.unique()).tolist()
-    label2id = dict(
-        zip(
-            np.sort(label_text),
-            np.sort(pd.factorize(label_text, sort=True)[0]).tolist(),
-        )
-    )
-    id2label = dict(
-        zip(
-            np.sort(pd.factorize(label_text, sort=True)[0]).tolist(),
-            np.sort(label_text),
-        )
-    )
+    # label_text = np.sort(df_test.label_text.unique()).tolist() # No longer needed here
+    # label2id = dict(                             # No longer needed here
+    #     zip(                                     # No longer needed here
+    #         np.sort(label_text),                 # No longer needed here
+    #         np.sort(pd.factorize(label_text, sort=True)[0]).tolist(), # No longer needed here
+    #     )                                        # No longer needed here
+    # )                                            # No longer needed here
+    # id2label = dict(                             # No longer needed here
+    #     zip(                                     # No longer needed here
+    #         np.sort(pd.factorize(label_text, sort=True)[0]).tolist(), # No longer needed here
+    #         np.sort(label_text),                 # No longer needed here
+    #     )                                        # No longer needed here
+    # )                                            # No longer needed here
     config = AutoConfig.from_pretrained(
         model_for_training_finetune,
-        label2id=label2id,
-        id2label=id2label,
+        label2id=label2id,  # Use the maps created earlier
+        id2label=id2label,  # Use the maps created earlier
         num_labels=len(label2id),
     )
-    logging.info(f"\n {label2id} \n")
+    logging.info(f"\n Model config updated with label maps: {label2id} \n")
 
     # load model with config
     model = AutoModelForSequenceClassification.from_pretrained(
-        model_for_training_finetune, config=config, ignore_mismatched_sizes=True
+        model_for_training_finetune,
+        config=config,
+        # ignore_mismatched_sizes=True allows loading a pre-trained model even if
+        # its classification head (last layer) doesn't match the new number of labels.
+        # The head weights will be randomly initialized.
+        ignore_mismatched_sizes=True,
     )
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -178,7 +214,9 @@ def finetune(
     # tokenize
     def tokenize(examples):
         return tokenizer(
-            examples["text"], truncation=True, max_length=768  # 512
+            examples["text"],
+            truncation=True,
+            max_length=512,  # Align with tokenizer loading
         )  # max_length can be reduced to e.g. 256 to increase speed, but long texts will be cut off
 
     dataset = dataset.map(tokenize, batched=True)
@@ -191,18 +229,13 @@ def finetune(
     )
 
     # **Inspect processed data**
-    logging.info(
-        "The overall structure of the pre-processed train and test sets:\n"
-    )
+    logging.info("The overall structure of the pre-processed train and test sets:\n")
     logging.info(dataset)
     logging.info(dataset["train"].to_pandas().head())
     logging.info(dataset["test"].to_pandas().head())
 
     logging.info("\n\nAn example for a row in the tokenized dataset:\n")
-    [
-        logging.info(f"{key}:    {value}")
-        for key, value in dataset["train"][0].items()
-    ]
+    [logging.info(f"{key}:    {value}") for key, value in dataset["train"][0].items()]
 
     # logging with wandb
 
@@ -231,14 +264,10 @@ def finetune(
 
             # metrics
             precision_macro, recall_macro, f1_macro, _ = (
-                precision_recall_fscore_support(
-                    labels, preds_max, average="macro"
-                )
+                precision_recall_fscore_support(labels, preds_max, average="macro")
             )  # https://scikit-learn.org/stable/modules/generated/sklearn.metrics.precision_recall_fscore_support.html
             precision_micro, recall_micro, f1_micro, _ = (
-                precision_recall_fscore_support(
-                    labels, preds_max, average="micro"
-                )
+                precision_recall_fscore_support(labels, preds_max, average="micro")
             )  # https://scikit-learn.org/stable/modules/generated/sklearn.metrics.precision_recall_fscore_support.html
             acc_balanced = balanced_accuracy_score(labels, preds_max)
             acc_not_balanced = accuracy_score(labels, preds_max)
@@ -259,9 +288,7 @@ def finetune(
     # Setting training arguments / hyperparameters
 
     # Set the directory to write the fine-tuned model and training logs to.
-    training_directory = (
-        f'./results/{hf_model_name.split("/")[-1]}-tanh-{now}'
-    )
+    training_directory = f"./results/{hf_model_name.split('/')[-1]}-tanh-{now}"
     # training_directory = f'./results/{model_name.split("/")[-1]}-zeroshot-{args.dataset_name_heldout}-{now}'
 
     # FP16 is a hyperparameter which can increase training speed and reduce memory
@@ -273,55 +300,7 @@ def finetune(
     # https://huggingface.co/transformers/main_classes/trainer.html#transformers.TrainingArguments
     # Hugging Face tipps to increase training speed and decrease out-of-memory (OOM) issues:
     # https://huggingface.co/transformers/performance.html?
-    if False:
-        train_args = TrainingArguments(
-            output_dir=training_directory,
-            logging_dir=f"{training_directory}/logs",
-            # this can be increased, but higher values increase training time.
-            # Good values for NLI are between 3 and 20.
-            num_train_epochs=3,
-            learning_rate=2e-5,
-            # 16, if you get an out-of-memory error, reduce this value to 8 or 4 and
-            # restart the runtime. Higher values increase training speed, but also
-            # increase memory requirements. Ideal values here are always a multiple of 8.
-            per_device_train_batch_size=8,
-            # 64, if you get an out-of-memory error, reduce this value, e.g. to 40 and restart the runtime
-            per_device_eval_batch_size=40,
-            # Can be used in case of memory problems to reduce effective batch size.
-            # accumulates gradients over X steps, only then backward/update. decreases
-            # memory usage, but also slightly speed. (!adapt/halve batch size accordingly)
-            # gradient_accumulation_steps=2,
-            # a good normal default value is 0.06 for normal BERT-base models, but since
-            # we want to reuse prior NLI knowledge and avoid catastrophic forgetting, we set the value higher
-            warmup_ratio=0.06,
-            weight_decay=0.1,
-            seed=SEED_GLOBAL,
-            load_best_model_at_end=True,
-            metric_for_best_model="f1_macro",
-            # Can speed up training and reduce memory consumption, but only makes sense at
-            # batch-size > 8. loads two copies of model weights, which creates overhead.
-            # https://huggingface.co/transformers/performance.html?#fp16
-            # fp16=fp16_bool,
-            # fp16_full_eval=fp16_bool,
-            evaluation_strategy="epoch",  # options: "no"/"steps"/"epoch"
-            # eval_steps=10_000,  # evaluate after n steps if evaluation_strategy!='steps'. defaults to logging_steps
-            save_strategy="epoch",  # options: "no"/"steps"/"epoch"
-            # save_steps=10_000,              # Number of updates steps before two checkpoint saves.
-            # If a value is passed, will limit the total amount of checkpoints.
-            # Deletes the older checkpoints in output_dir
-            save_total_limit=1,
-            # logging_strategy="steps",
-            report_to="all",  # "all"  # logging
-            # push_to_hub=False,
-            # push_to_hub_model_id=f"{model_name}-finetuned-{task}",
-            run_name=run_name,
-            push_to_hub=True,  # does not seem to work if save_strategy="no"
-            hub_model_id=hf_model_name,
-            hub_token=hf_access_token,
-            hub_strategy="end",
-            hub_private_repo=True,
-            # metric_for_best_model="accuracy",
-        )
+    # ---- Removed obsolete commented-out TrainingArguments block ----
 
     # copy of finetune
     eval_batch = 64 if "large" in model_for_training_finetune else 64 * 2  # 40
@@ -333,54 +312,7 @@ def finetune(
     hub_model_id = hf_model_name
 
     logging.info(f"Hub model id: ==================> {hub_model_id}")
-    if False:
-        train_args = TrainingArguments(
-            output_dir=training_directory,
-            logging_dir=f"{training_directory}/logs",
-            # deepspeed="ds_config_zero3.json",  # if using deepspeed
-            lr_scheduler_type="linear",
-            # can increase speed with dynamic padding, by grouping similar length texts
-            # https://huggingface.co/transformers/main_classes/trainer.html
-            group_by_length=False,
-            learning_rate=(
-                9e-6 if "large" in model_for_training_finetune else 2e-5
-            ),
-            per_device_train_batch_size=per_device_train_batch_size,
-            per_device_eval_batch_size=eval_batch,
-            # (!adapt/halve batch size accordingly). accumulates gradients over X steps,
-            # only then backward/update. decreases memory usage, but also slightly speed
-            # gradient_accumulation_steps=gradient_accumulation_steps,
-            # eval_accumulation_steps=2,
-            num_train_epochs=4,
-            # max_steps=400,ll
-            # warmup_steps=0,  # 1000,
-            warmup_ratio=0.06,  # 0.1, 0.06
-            weight_decay=0.01,  # 0.1,
-            # ! only makes sense at batch-size > 8. loads two copies of
-            # model weights, which creates overhead. https://huggingface.co/transformers/performance.html?#fp16
-            # fp16=fp16_bool,
-            fp16_full_eval=fp16_bool,
-            evaluation_strategy="epoch",
-            seed=SEED_GLOBAL,
-            # load_best_model_at_end=True,
-            metric_for_best_model="accuracy",
-            # metric_for_best_model="f1_macro",
-            eval_steps=300,  # evaluate after n steps if evaluation_strategy!='steps'.
-            # defaults to logging_steps
-            save_strategy="epoch",  # options: "no"/"steps"/"epoch"
-            # save_steps=1_000_000,  # Number of updates steps before two checkpoint saves.
-            # If a value is passed, will limit the total amount of checkpoints. Deletes
-            # the older checkpoints in output_dir
-            save_total_limit=1,
-            # logging_strategy="epoch",
-            report_to="all",  # "all"
-            run_name=run_name,
-            push_to_hub=True,  # does not seem to work if save_strategy="no"
-            hub_model_id=hf_model_name,
-            hub_token=hf_access_token,
-            hub_strategy="end",
-            hub_private_repo=True,
-        )
+    # ---- Removed obsolete commented-out TrainingArguments block ----
     # end of copied from other
 
     # Fine-tuning and evaluation

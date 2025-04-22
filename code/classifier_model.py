@@ -13,6 +13,7 @@ logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
+
 def finetune_model(
     hf_access_token: str = None,
     wandb_access_token: str = None,
@@ -42,22 +43,19 @@ def test(
     hf_model_name,
     hf_access_token,
     output_classify_file,
-    flush_interval,
     cumulative_score,
     text_column,
     subj_column,
+    batch_size,
 ):
     banner(["Classifier started"])
-    db_zero_shot = DebertaZeroShot(
-        hf_model_name, cumulative_score, hf_access_token
-    )
+    db_zero_shot = DebertaZeroShot(hf_model_name, cumulative_score, hf_access_token)
     start_time = time.time()
     run(
         zero_shot_model=db_zero_shot,
         test_df=test_dataset,
         output_classify_file=output_classify_file,
-        # flush_interval=flush_interval,
-        batch_size=500,
+        batch_size=batch_size,
         text_column=text_column,
         subj_column=subj_column,
     )
@@ -89,9 +87,7 @@ if __name__ == "__main__":
     )
 
     # Add arguments corresponding to the environment variables with direct defaults and short options
-    parser.add_argument(
-        "-t", "--hf-access-token", help="Hugging Face Access Token"
-    )
+    parser.add_argument("-t", "--hf-access-token", help="Hugging Face Access Token")
 
     parser.add_argument(
         "-w", "--wandb-access-token", help="Weights & Biases Access Token"
@@ -105,23 +101,7 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "-f", "--flush-interval", type=int, default=100, help="Flush Interval"
-    )
-
-    # Modify these to your needs with command-line arguments and short options
-    parser.add_argument(
         "-i", "--input-dir", default="data/combined", help="Input Directory"
-    )
-
-    parser.add_argument(
-        "-s",
-        "--suffix",
-        default="*deberta_combined_data_correct.jsonl",
-        help="File Suffix",
-    )
-
-    parser.add_argument(
-        "-a" "--dataset-name", default="zephyr", help="Dataset Name"
     )
 
     parser.add_argument(
@@ -146,9 +126,9 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--subject-label",
+        "--subject-column",
         default="label",
-        help="column name in input document of subject label",
+        help="column name in input document of subject label/column",
     )
     parser.add_argument(
         "--text",
@@ -181,9 +161,10 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--normalize",
-        action="store_true",
-        help="file name for the input examples file",
+        "--eval-batch-size",
+        type=int,
+        default=128,
+        help="Batch size for evaluation/testing.",
     )
 
     parser.add_argument(
@@ -224,9 +205,10 @@ if __name__ == "__main__":
 
     else:
         if args.train:
-            # step downloading the dataset
+            # Load dataset for training and testing
             from datasets import load_dataset
 
+            # Load the dataset specified; the test split will be used for evaluation after training
             dataset_finetune = load_dataset(
                 args.input_hf_dataset, token=args.hf_access_token
             )
@@ -236,6 +218,7 @@ if __name__ == "__main__":
 
             # Step 4: Finetune the model
             banner(["Finetuning started"])
+            # Consider adding try...except block for robustness
             finetune_model(
                 hf_access_token=args.hf_access_token,
                 wandb_access_token=args.wandb_access_token,
@@ -246,14 +229,15 @@ if __name__ == "__main__":
                 wandb_output=args.wandb_output,
             )
 
-    # Step 5: Run the classification process on the finetuned model
+    # Step 5: Run the classification process
+    # Consider adding try...except block for robustness
     test(
-        test_df,
-        args.hf_model_name,
-        args.hf_access_token,
-        args.output_classify_file,
-        args.flush_interval,
-        args.cumulative_score,
-        args.text,   
-        args.subject_label,
+        test_df=test_df,  # Ensure test_df is defined by this point
+        hf_model_name=args.hf_model_name,
+        hf_access_token=args.hf_access_token,
+        output_classify_file=args.output_classify_file,
+        cumulative_score=args.cumulative_score,
+        text_column=args.text,
+        subj_column=args.subject_column,  # Use renamed argument
+        batch_size=args.eval_batch_size,
     )

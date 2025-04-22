@@ -1,4 +1,5 @@
 import logging
+import traceback  # Import traceback for detailed error logging
 
 import pandas as pd
 from libdocs.classifiers.common.types import ClassificationRequest
@@ -28,6 +29,11 @@ def run(
         batch_size (int): Number of rows to process in each batch.
     """
 
+    # Add a warning about the output file append mode
+    logging.warning(
+        f"Output will be appended to {output_classify_file}. Ensure the file is empty or removed if starting a fresh run."
+    )
+
     correct_top1 = correct_top2 = correct_top3 = processed = 0
     results = []  # Store classification results temporarily
 
@@ -39,40 +45,64 @@ def run(
         for _, row in batch_data.iterrows():
             processed += 1
             text, subj = row[text_column], row[subj_column]
+            subj = subj.lower().strip()  # Process subj early
 
-            out, resp = zero_shot_model.classify(
-                ClassificationRequest(input=text)
-            )
-            # matches = resp
-            subj = subj.lower().strip()
+            try:  # Add try block for robustness
+                out, resp = zero_shot_model.classify(ClassificationRequest(input=text))
 
-            predicted_labels = [label.strip().lower() for label in resp]
+                predicted_labels = (
+                    [label.strip().lower() for label in resp] if resp else []
+                )
 
-            result = {
-                "index": _,
-                "text": text,
-                "given": subj,
-                "correct_top1": (
+                # Calculate correctness
+                is_correct_top1 = (
                     int(subj == predicted_labels[0]) if predicted_labels else 0
-                ),
-                "correct_top2": (
+                )
+                is_correct_top2 = (
                     int(subj in predicted_labels[:2])
-                    if len(predicted_labels) >= 2
-                    else correct_top1
-                ),
-                "correct_top3": (
-                    int(subj in predicted_labels)
-                    if predicted_labels
-                    else correct_top2
-                ),
-                "predicted": predicted_labels,  # Keep as list
-                "score": out,
-            }
-            results.append(result)
+                    if len(predicted_labels) >= 1
+                    else 0
+                )  # simplified check, handles len 1
+                is_correct_top3 = (
+                    int(subj in predicted_labels[:3])
+                    if len(predicted_labels) >= 1
+                    else 0
+                )  # Corrected top-3 check
 
-            correct_top1 += result["correct_top1"]
-            correct_top2 += result["correct_top2"]
-            correct_top3 += result["correct_top3"]
+                result = {
+                    "index": _,
+                    "text": text,
+                    "given": subj,
+                    "correct_top1": is_correct_top1,
+                    "correct_top2": is_correct_top2,  # Use is_correct_top2
+                    "correct_top3": is_correct_top3,  # Use corrected is_correct_top3
+                    "predicted": predicted_labels,  # Keep as list
+                    "score": out,  # Use the score from classify
+                }
+                results.append(result)
+
+                correct_top1 += result["correct_top1"]
+                correct_top2 += result["correct_top2"]
+                correct_top3 += result["correct_top3"]
+
+            except Exception as e:  # Add except block
+                logging.error(f"Error processing row index {_}: {e}")
+                logging.error(f"Text: {text[:500]}...")  # Log problematic text snippet
+                logging.error(traceback.format_exc())  # Log full traceback
+                # Optionally add a placeholder result for failed rows
+                results.append(
+                    {
+                        "index": _,
+                        "text": text,
+                        "given": subj,
+                        "correct_top1": 0,
+                        "correct_top2": 0,
+                        "correct_top3": 0,
+                        "predicted": ["ERROR"],
+                        "score": None,  # Indicate error
+                        "error": str(e),
+                    }
+                )
 
     # Process Dataframe in batches
     for i in tqdm(
