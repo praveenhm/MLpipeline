@@ -1,0 +1,70 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# MLpipeline Project Structure
+
+This project appears to be an ML pipeline for document processing and classification.
+
+## Key Directories
+
+*   **`code/`**: Contains the main Python source code for the pipeline components.
+    *   **`code/libdocs/`**: Houses various library modules: [libdocs](mdc:code/libdocs)
+        *   `chunker/`: Likely for splitting documents into chunks. [chunker](mdc:code/libdocs/chunker)
+        *   `classifiers/`: Different classifier implementations: [classifiers](mdc:code/libdocs/classifiers)
+            *   `acuopenai/`: OpenAI-based classifier. [acuopenai](mdc:code/libdocs/classifiers/acuopenai)
+            *   `anthropic/`: Anthropic-based classifier. [anthropic](mdc:code/libdocs/classifiers/anthropic)
+            *   `common/`: Common classifier utilities/base classes. [common](mdc:code/libdocs/classifiers/common)
+            *   `deberta/`: DeBERTa model classifier. [deberta](mdc:code/libdocs/classifiers/deberta)
+            *   `knn/`: K-Nearest Neighbors classifier. [knn](mdc:code/libdocs/classifiers/knn)
+            *   `mistral/`: Mistral model classifier. [mistral](mdc:code/libdocs/classifiers/mistral)
+            *   `mock/`: Mock classifier for testing. [mock](mdc:code/libdocs/classifiers/mock)
+            *   `zephyr/`: Zephyr model classifier. [zephyr](mdc:code/libdocs/classifiers/zephyr)
+        *   `embedder/`: Code related to text embedding. [embedder](mdc:code/libdocs/embedder)
+        *   `faissindexer/`: FAISS indexer implementation. [faissindexer](mdc:code/libdocs/faissindexer)
+        *   `finetune/`: Code for fine-tuning models. [finetune](mdc:code/libdocs/finetune)
+        *   `google/`: Google Cloud related integrations (e.g., Vertex AI). [google](mdc:code/libdocs/google)
+        *   `huggingface/`: Hugging Face model integrations. [huggingface](mdc:code/libdocs/huggingface)
+        *   `llmchecker/`: Component for checking LLM outputs. [llmchecker](mdc:code/libdocs/llmchecker)
+        *   `metadata/`: Handling document metadata. [metadata](mdc:code/libdocs/metadata)
+        *   `naming/`: Potential code for naming conventions or entity recognition. [naming](mdc:code/libdocs/naming)
+        *   `pipeline/`: Contains the core pipeline orchestration logic. [pipeline](mdc:code/libdocs/pipeline)
+        *   `rest_api/`: A REST API interface for the pipeline. [rest_api](mdc:code/libdocs/rest_api)
+        *   `runpod/`: Integration with RunPod services. [runpod](mdc:code/libdocs/runpod)
+        *   `splitter/`: Document splitting logic. [splitter](mdc:code/libdocs/splitter)
+        *   `types/`: Custom type definitions. [types](mdc:code/libdocs/types)
+        *   `utils/`: Utility functions: [utils](mdc:code/libdocs/utils)
+            *   `banner/`: Utility for displaying banners/logs. [banner](mdc:code/libdocs/utils/banner)
+            *   `csv/`: CSV file handling utilities. [csv](mdc:code/libdocs/utils/csv)
+            *   `data_cleaner/`: Data cleaning functions. [data_cleaner](mdc:code/libdocs/utils/data_cleaner)
+            *   `gpu/`: GPU management utilities. [gpu](mdc:code/libdocs/utils/gpu)
+            *   `jsonl/`: JSON Lines file handling. [jsonl](mdc:code/libdocs/utils/jsonl)
+            *   `label/`: Labeling related utilities. [label](mdc:code/libdocs/utils/label)
+            *   `others/`: Miscellaneous utilities. [others](mdc:code/libdocs/utils/others)
+            *   `text/`: Text processing utilities. [text](mdc:code/libdocs/utils/text)
+            *   `training/`: Training related utilities. [training](mdc:code/libdocs/utils/training)
+        *   `wandb/`: Weights & Biases integration. [wandb](mdc:code/libdocs/wandb)
+*   **`data/`**: Stores datasets used for training and testing. [data](mdc:data)
+    *   `balanced/`: Balanced dataset versions. [balanced](mdc:data/balanced)
+        *   `sparse/`: Sparse data format. [sparse](mdc:data/balanced/sparse)
+    *   `combined/`: Combined datasets from different runs. [combined](mdc:data/combined)
+        *   `run1/`, `run2/`: Data from specific runs. [run1](mdc:data/combined/run1), [run2](mdc:data/combined/run2)
+    *   `test/`: Test dataset. [test](mdc:data/test)
+*   **`docs/`**: Project documentation. [docs](mdc:docs)
+*   **`.github/workflows/`**: CI/CD workflows. [.github/workflows](mdc:.github/workflows)
+*   **`dev/`**: Development related scripts or configurations. [dev](mdc:dev)
+*   **`testdata/`**: General test data, possibly outside the main `data` directory. [testdata](mdc:testdata)
+
+## Key Files
+
+*   **`README.md`**: General project overview and setup instructions. [README.md](mdc:README.md)
+*   **`Makefile`**: Defines common development tasks. [Makefile](mdc:Makefile)
+*   **`Dockerfile`**: Used for containerizing the application. [Dockerfile](mdc:Dockerfile)
+*   **`pyproject.toml`**: Defines project dependencies and build configuration. [pyproject.toml](mdc:pyproject.toml)
+*   **`stage0`, `stage1`, `stage2`**: These might be scripts or entry points for different stages of the ML pipeline. [stage0](mdc:stage0), [stage1](mdc:stage1), [stage2](mdc:stage2)
+*   **`LICENSE`**: Project license file. [LICENSE](mdc:LICENSE)
+*   **`.gitignore`**: Specifies intentionally untracked files that Git should ignore. [.gitignore](mdc:.gitignore)
+*   **`.dockerignore`**: Specifies files to exclude when building the Docker image. [.dockerignore](mdc:.dockerignore)
+
+This rule provides a more detailed understanding of the project layout. Refer to the linked files and directories for specifics.
